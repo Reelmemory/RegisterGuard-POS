@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Arc Dark — POS dashboard / dense data */
+:root {
+  --bg: #0d1b2f;
+  --bg-gradient: linear-gradient(180deg, #0d1b2f 0%, #0d1b2f 58%, #122d45 100%);
+  --surface: rgba(255, 255, 255, 0.07);
+  --surface-strong: rgba(255, 255, 255, 0.11);
+  --surface-muted: #1f2f44;
+  --ink: #f9faf3;
+  --ink-2: #e3ecf9;
+  --muted: #cbd5e1;
+  --subtle: #94a3b8;
+  --border: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(203, 219, 242, 0.55);
+  --accent: #acc6e9;
+  --accent-hover: #cbdbf2;
+  --success: #8dd89f;
+  --danger: #e86d7a;
+  --cashier-accent: #60c2a0;
+  --customer-accent: #acc6e9;
+}
+
+/* Typography */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  background-image: var(--bg-gradient);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.display { font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.03em; }
+.mono { font-family: 'JetBrains Mono', Menlo, monospace; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
+
+/* Glass card */
+.glass {
+  background: var(--surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+.glass-strong {
+  background: var(--surface-strong);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+}
+
+/* Toaster override for dark mode */
+[data-sonner-toaster] [data-type="success"] { background: #1a3a2a !important; border-color: var(--success) !important; }
+[data-sonner-toaster] [data-type="error"] { background: #3a1a1f !important; border-color: var(--danger) !important; }

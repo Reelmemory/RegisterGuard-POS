@@ -1,0 +1,999 @@
+{
+  "contractAddress": "0x66bdda835c3f71b6dbf15e49fc67d7b3eccedded",
+  "network": "ARC-TESTNET",
+  "deployerWalletId": "3c2464b2-8369-52e2-a782-800bbeca5396",
+  "contract_code_path": "/home/user/app/contracts/RegisterGuardPOS.sol",
+  "contract_compiled_code_path": "/home/user/app/contracts/out/RegisterGuardPOS.sol/RegisterGuardPOS.json",
+  "contract_network_and_links": {
+    "Arc Testnet": "https://explorer.testnet.arc.io/address/0x66bdda835c3f71b6dbf15e49fc67d7b3eccedded"
+  },
+  "contract_deployments": [
+    {
+      "chain": "Arc Testnet",
+      "address": "0x66bdda835c3f71b6dbf15e49fc67d7b3eccedded",
+      "explorerUrl": "https://explorer.testnet.arc.io/address/0x66bdda835c3f71b6dbf15e49fc67d7b3eccedded",
+      "txHash": "0x4e12bfb7f4809a0c2792d9cd248dbd92b98ea1dd303ddf51dad8c0a73505a6f6",
+      "deployedAt": "2026-10-20T09:09:15.067Z"
+    }
+  ],
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_usdc",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_initialOwner",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_ownerSavingsVault",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_workingCapitalWallet",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_savingsBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_workingCapitalBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_supplierEscrowBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_refundBufferBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "_maxRefundBuffer",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "authorizedInvoiceNonces",
+      "inputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "cashiers",
+      "inputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "active",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "dailyRefundLimit",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "refundedToday",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "lastResetDay",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "claimRefund",
+      "inputs": [
+        {
+          "name": "claimId",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "secret",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "destination",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "createClaimableRefund",
+      "inputs": [
+        {
+          "name": "invoiceId",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "claimHash",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "claimId",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "invoices",
+      "inputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "payer",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "cashier",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "refundedAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "timestamp",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "paid",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "issueDirectRefund",
+      "inputs": [
+        {
+          "name": "invoiceId",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "owner",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "payInvoice",
+      "inputs": [
+        {
+          "name": "invoiceId",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "cashier",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "payInvoiceWithAuthorization",
+      "inputs": [
+        {
+          "name": "invoiceId",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "validAfter",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "validBefore",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "v",
+          "type": "uint8",
+          "internalType": "uint8"
+        },
+        {
+          "name": "r",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "s",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "cashier",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "reclaimExpiredRefund",
+      "inputs": [
+        {
+          "name": "claimId",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "refundBufferBalance",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "refundClaims",
+      "inputs": [
+        {
+          "name": "",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "invoiceId",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "claimHash",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "expiry",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "claimed",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "createdByCashier",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "registerInvoiceForAuthorization",
+      "inputs": [
+        {
+          "name": "invoiceId",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        },
+        {
+          "name": "from",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "nonce",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "releaseSupplierEscrow",
+      "inputs": [
+        {
+          "name": "supplier",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "invoiceRef",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setCashier",
+      "inputs": [
+        {
+          "name": "cashier",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "active",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "dailyRefundLimit",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setSplitConfig",
+      "inputs": [
+        {
+          "name": "ownerSavingsVault",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "workingCapitalWallet",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "savingsBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "workingCapitalBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "supplierEscrowBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "refundBufferBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "maxRefundBuffer",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "splitConfig",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "ownerSavingsVault",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "workingCapitalWallet",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "savingsBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "workingCapitalBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "supplierEscrowBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "refundBufferBps",
+          "type": "uint16",
+          "internalType": "uint16"
+        },
+        {
+          "name": "maxRefundBuffer",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "supplierEscrowBalance",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "transferOwnership",
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "usdc",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IFiatTokenV2_2"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "event",
+      "name": "CashierUpdated",
+      "inputs": [
+        {
+          "name": "cashier",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "active",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        },
+        {
+          "name": "dailyRefundLimit",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "DirectRefundIssued",
+      "inputs": [
+        {
+          "name": "invoiceId",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "issuedBy",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "InvoicePaid",
+      "inputs": [
+        {
+          "name": "invoiceId",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "payer",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "cashier",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "savingsAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "workingCapAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "supplierAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "bufferAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "OwnershipTransferred",
+      "inputs": [
+        {
+          "name": "previousOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RefundClaimCreated",
+      "inputs": [
+        {
+          "name": "claimId",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "invoiceId",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "expiry",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "createdBy",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RefundClaimed",
+      "inputs": [
+        {
+          "name": "claimId",
+          "type": "bytes32",
+          "indexed": true,
+          "internalType": "bytes32"
+        },
+        {
+          "name": "destination",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "SplitConfigUpdated",
+      "inputs": [
+        {
+          "name": "ownerSavingsVault",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "workingCapitalWallet",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        },
+        {
+          "name": "savingsBps",
+          "type": "uint16",
+          "indexed": false,
+          "internalType": "uint16"
+        },
+        {
+          "name": "workingCapitalBps",
+          "type": "uint16",
+          "indexed": false,
+          "internalType": "uint16"
+        },
+        {
+          "name": "supplierEscrowBps",
+          "type": "uint16",
+          "indexed": false,
+          "internalType": "uint16"
+        },
+        {
+          "name": "refundBufferBps",
+          "type": "uint16",
+          "indexed": false,
+          "internalType": "uint16"
+        },
+        {
+          "name": "maxRefundBuffer",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "SupplierPaid",
+      "inputs": [
+        {
+          "name": "supplier",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "invoiceRef",
+          "type": "string",
+          "indexed": false,
+          "internalType": "string"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "ClaimAlreadyClaimed",
+      "inputs": [
+        {
+          "name": "claimId",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ClaimExpired",
+      "inputs": [
+        {
+          "name": "claimId",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ClaimNotExpiredYet",
+      "inputs": [
+        {
+          "name": "claimId",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ClaimNotFound",
+      "inputs": [
+        {
+          "name": "claimId",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ExceedsDailyRefundLimit",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "InsufficientRefundBuffer",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "InsufficientSupplierEscrow",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "InvalidSecret",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "InvalidSplitBps",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "InvoiceAlreadyPaid",
+      "inputs": [
+        {
+          "name": "invoiceId",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "InvoiceNonceMismatch",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "InvoiceNotPaid",
+      "inputs": [
+        {
+          "name": "invoiceId",
+          "type": "bytes32",
+          "internalType": "bytes32"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "NotOwner",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "NotOwnerOrActiveCashier",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ReentrancyGuardReentrantCall",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "RefundExceedsInvoice",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "TransferFailed",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ZeroAddress",
+      "inputs": []
+    }
+  ]
+}
