@@ -1,0 +1,95 @@
+{"level":"error","message":"[vite] SyntaxError: The requested module '/node_modules/.vite/deps/lucide-react.js?v=ed645da4' does not provide an export named 'LayoutPanelsTopLeft'","timestamp":1792484969710,"stack":"SyntaxError: The requested module '/node_modules/.vite/deps/lucide-react.js?v=ed645da4' does not provide an export named 'LayoutPanelsTopLeft'"}
+{"level":"error","message":"[vite] Failed to reload /src/App.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)","timestamp":1792484969711}
+{"level":"debug","message":"[vite] hot updated: /src/App.tsx","timestamp":1792484969712}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792484969712}
+{"level":"debug","message":"[vite] hot updated: /src/components/CustomerPane.tsx","timestamp":1792485389122}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792485389123}
+{"level":"debug","message":"[vite] hot updated: /src/components/CustomerPane.tsx","timestamp":1792485401753}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792485401753}
+{"level":"debug","message":"[vite] hot updated: /src/components/CashierPane.tsx","timestamp":1792485518025}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792485518026}
+{"level":"debug","message":"[vite] hot updated: /src/components/CashierPane.tsx","timestamp":1792485518897}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792485518897}
+{"level":"debug","message":"[vite] hot updated: /src/components/CashierPane.tsx","timestamp":1792485523361}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792485523361}
+{"level":"debug","message":"[vite] hot updated: /src/components/CashierPane.tsx","timestamp":1792485524277}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792485524277}
+{"level":"debug","message":"[vite] hot updated: /src/components/CashierPane.tsx","timestamp":1792485524985}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792485524985}
+{"level":"debug","message":"[vite] hot updated: /src/components/CashierPane.tsx","timestamp":1792485525766}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792485525767}
+{"level":"debug","message":"[vite] hot updated: /src/components/CustomerPane.tsx","timestamp":1792485533190}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792485533191}
+{"level":"debug","message":"[vite] hot updated: /src/components/CustomerPane.tsx","timestamp":1792485533886}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792485533886}
+{"level":"debug","message":"[vite] hot updated: /src/components/CustomerPane.tsx","timestamp":1792485536790}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792485536791}
+{"level":"debug","message":"[vite] hot updated: /src/components/CustomerPane.tsx","timestamp":1792485543447}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792485543447}
+{"level":"debug","message":"[vite] hot updated: /src/components/CustomerPane.tsx","timestamp":1792485600763}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792485600763}
+{"level":"debug","message":"[vite] hot updated: /src/components/CashierPane.tsx","timestamp":1792485653235}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792485653235}
+{"level":"debug","message":"[vite] hot updated: /src/App.tsx","timestamp":1792485693035}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792485693035}
+{"level":"debug","message":"[vite] hot updated: /src/App.tsx","timestamp":1792485693686}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792485693686}
+{"level":"debug","message":"[vite] hot updated: /src/App.tsx","timestamp":1792485694384}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792485694384}
+{"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792485722283}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487109655}
+{"level":"debug","message":"[vite] hot updated: /src/App.tsx","timestamp":1792487109656}
+{"level":"debug","message":"[vite] hot updated: /src/components/BroadcastRelayer.tsx","timestamp":1792487109656}
+{"level":"debug","message":"[vite] hot updated: /src/components/ContractSetup.tsx","timestamp":1792487109656}
+{"level":"debug","message":"[vite] hot updated: /src/components/OwnerTab.tsx","timestamp":1792487109656}
+{"level":"debug","message":"[vite] hot updated: /src/components/CashierPane.tsx","timestamp":1792487109656}
+{"level":"debug","message":"[vite] hot updated: /src/components/CustomerPane.tsx","timestamp":1792487109656}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487109941}
+{"level":"debug","message":"[vite] hot updated: /src/App.tsx","timestamp":1792487109941}
+{"level":"debug","message":"[vite] hot updated: /src/components/BroadcastRelayer.tsx","timestamp":1792487109941}
+{"level":"debug","message":"[vite] hot updated: /src/components/ContractSetup.tsx","timestamp":1792487109941}
+{"level":"debug","message":"[vite] hot updated: /src/components/OwnerTab.tsx","timestamp":1792487109941}
+{"level":"debug","message":"[vite] hot updated: /src/components/CashierPane.tsx","timestamp":1792487109941}
+{"level":"debug","message":"[vite] hot updated: /src/components/CustomerPane.tsx","timestamp":1792487109941}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487110409}
+{"level":"debug","message":"[vite] hot updated: /src/components/CashierPane.tsx","timestamp":1792487110409}
+{"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792487110409}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487110588}
+{"level":"debug","message":"[vite] hot updated: /src/components/CashierPane.tsx","timestamp":1792487110589}
+{"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792487110589}
+{"level":"debug","message":"[vite] hot updated: /src/components/BroadcastRelayer.tsx","timestamp":1792487191440}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487191440}
+{"level":"debug","message":"[vite] hot updated: /src/components/CashierPane.tsx","timestamp":1792487192386}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487192386}
+{"level":"debug","message":"[vite] hot updated: /src/components/BroadcastRelayer.tsx","timestamp":1792487194637}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487194637}
+{"level":"debug","message":"[vite] hot updated: /src/components/CashierPane.tsx","timestamp":1792487212258}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487212258}
+{"level":"debug","message":"[vite] hot updated: /src/components/CashierPane.tsx","timestamp":1792487213094}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487213094}
+{"level":"debug","message":"[vite] hot updated: /src/components/CashierPane.tsx","timestamp":1792487213875}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487213875}
+{"level":"debug","message":"[vite] hot updated: /src/components/CashierPane.tsx","timestamp":1792487214614}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487214614}
+{"level":"debug","message":"[vite] hot updated: /src/components/CashierPane.tsx","timestamp":1792487215349}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487215349}
+{"level":"debug","message":"[vite] hot updated: /src/App.tsx","timestamp":1792487219314}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487219314}
+{"level":"debug","message":"[vite] hot updated: /src/App.tsx","timestamp":1792487237084}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487237085}
+{"level":"debug","message":"[vite] hot updated: /src/App.tsx","timestamp":1792487238966}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487238966}
+{"level":"debug","message":"[vite] hot updated: /src/App.tsx","timestamp":1792487239687}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487239687}
+{"level":"debug","message":"[vite] hot updated: /src/App.tsx","timestamp":1792487257029}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487257029}
+{"level":"debug","message":"[vite] hot updated: /src/App.tsx","timestamp":1792487265344}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792487265344}
+{"level":"debug","message":"[vite] connected.","timestamp":1792487609241}
+{"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792488839347}
+{"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792490644481}
+{"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792490821699}
+{"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792492302992}
+{"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792493487669}
+{"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792495315389}
+{"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792496100632}

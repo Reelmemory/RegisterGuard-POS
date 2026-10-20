@@ -22,17 +22,18 @@ import {
   Cookie,
   Apple,
   Sandwich,
+  Lock,
 } from 'lucide-react'
 import type { RegisterGuardContract, Invoice, QRPayload, RefundClaimPayload } from '../types'
 import { getUsdc } from '@/onchain-facts'
 import { arcTxUrl } from '../utils/arcExplorer'
-import { parseAmount, formatAmount } from '@/onchain-money'
+import { parseAmount } from '@/onchain-money'
 
 // ─── Cashier micro-presets (mainnet-friendly demo amounts) ────────────────────
 const PRESETS = [
-  { label: 'Espresso',  amount: '0.10', icon: <Coffee  size={11} /> },
-  { label: 'Pastry',    amount: '0.25', icon: <Cookie  size={11} /> },
-  { label: 'Snack',     amount: '0.50', icon: <Apple   size={11} /> },
+  { label: 'Espresso',  amount: '0.10', icon: <Coffee   size={11} /> },
+  { label: 'Pastry',    amount: '0.25', icon: <Cookie   size={11} /> },
+  { label: 'Snack',     amount: '0.50', icon: <Apple    size={11} /> },
   { label: 'Lunch',     amount: '5.00', icon: <Sandwich size={11} /> },
 ]
 
@@ -58,6 +59,14 @@ const POS_READ_ABI = [
   { name: 'refundBufferBalance', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
 ] as const
 
+// ── Helper: compute safe refund amount (capped by buffer) ─────────────────────
+function safeRefundUnits(invoiceUnits: bigint, bufferBalance: bigint): bigint {
+  return bufferBalance > 0n && bufferBalance < invoiceUnits ? bufferBalance : invoiceUnits
+}
+function formatUnitsUsd(units: bigint): string {
+  return (Number(units) / 1_000_000).toFixed(2)
+}
+
 export function CashierPane({
   contract,
   chainId,
@@ -71,8 +80,11 @@ export function CashierPane({
   const [noteInput, setNoteInput] = useState('')
   const [currentInvoiceId, setCurrentInvoiceId] = useState<`0x${string}` | null>(null)
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
-  const [refundingId, setRefundingId] = useState<`0x${string}` | null>(null)
-  const [refundRecipient, setRefundRecipient] = useState('')
+
+  // Tracks which receipt row just fired a direct-refund tx (for per-row status)
+  const [directRefundingId, setDirectRefundingId] = useState<`0x${string}` | null>(null)
+  // Tracks which receipt row just fired a claim-refund tx
+  const [claimRefundingId, setClaimRefundingId] = useState<`0x${string}` | null>(null)
 
   // Manual Refund & Claim QR card state
   const [manualOpen, setManualOpen] = useState(false)
@@ -86,7 +98,7 @@ export function CashierPane({
 
   const usdc = getUsdc(chainId)
 
-  // Live refundBufferBalance for the manual card cap hint
+  // Live refundBufferBalance — polled every 10 s
   const { data: bufferBalanceRaw } = useReadContract({
     address: contract.address,
     abi: POS_READ_ABI,
@@ -97,12 +109,12 @@ export function CashierPane({
   const bufferBalance: bigint = typeof bufferBalanceRaw === 'bigint' ? bufferBalanceRaw : 0n
   const bufferUsd = Number(bufferBalance) / 1_000_000
 
-  // Recent Receipts list write hooks
-  const { writeContract: createClaimTx, data: claimHash, isPending: claimPending } = useWriteContract()
-  const { isLoading: claimConfirming } = useWaitForTransactionReceipt({ hash: claimHash })
-
+  // Recent Receipts: shared hooks — we only ever fire one refund at a time
   const { writeContract: directRefundTx, data: directHash, isPending: directPending } = useWriteContract()
   const { isLoading: directConfirming, isSuccess: directSuccess } = useWaitForTransactionReceipt({ hash: directHash })
+
+  const { writeContract: createClaimTx, data: claimHash, isPending: claimPending } = useWriteContract()
+  const { isLoading: claimConfirming, isSuccess: claimSuccess } = useWaitForTransactionReceipt({ hash: claimHash })
 
   // Manual card — separate hook instances
   const { writeContract: manualDirectTx, data: manualDirectHash, isPending: manualDirectPending } = useWriteContract()
@@ -111,6 +123,7 @@ export function CashierPane({
   const { writeContract: manualClaimTx, data: manualClaimTxHash, isPending: manualClaimTxPending } = useWriteContract()
   const { isLoading: manualClaimTxConfirming, isSuccess: manualClaimTxSuccess } = useWaitForTransactionReceipt({ hash: manualClaimTxHash })
 
+  // ── Invoice QR generator ──────────────────────────────────────────────────
   const generateQR = useCallback(async () => {
     const raw = parseFloat(amountInput)
     if (isNaN(raw) || raw <= 0) { toast.error('Enter a valid amount'); return }
@@ -141,55 +154,64 @@ export function CashierPane({
     toast.success('Invoice QR generated')
   }, [amountInput, noteInput, chainId, contract.address, cashierAddress, usdc, onInvoiceCreated])
 
+  // ── Recent Receipts: 1-click Direct Refund ───────────────────────────────
+  // Uses the payer address locked at payment time and caps amount at buffer.
   const handleDirectRefund = useCallback(
-    (invoice: Invoice) => {
-      if (!refundRecipient || !refundRecipient.startsWith('0x')) {
-        toast.error('Enter a valid recipient address'); return
-      }
+    (inv: Invoice) => {
+      if (!inv.payer) { toast.error('No payer address recorded for this invoice'); return }
+      const units = safeRefundUnits(inv.amountUnits, bufferBalance)
+      if (units === 0n) { toast.error('Refund buffer is empty'); return }
+      setDirectRefundingId(inv.invoiceId)
       directRefundTx({
         address: contract.address,
         abi: contract.abi,
         functionName: 'issueDirectRefund',
-        args: [invoice.invoiceId, refundRecipient as `0x${string}`, invoice.amountUnits],
+        args: [inv.invoiceId, inv.payer, units],
         chainId,
       })
     },
-    [contract, chainId, refundRecipient, directRefundTx]
+    [contract, chainId, bufferBalance, directRefundTx]
   )
 
+  // ── Recent Receipts: 1-click CEX-Safe Claim QR ───────────────────────────
+  // Uses payer address as default destination; opens manual card pre-filled
+  // and fires createClaimableRefund in one shot.
   const handleCreateClaimRefund = useCallback(
-    (invoice: Invoice) => {
+    (inv: Invoice) => {
+      const dest = inv.payer
+      if (!dest) { toast.error('No payer address for this invoice'); return }
+      const units = safeRefundUnits(inv.amountUnits, bufferBalance)
+      if (units === 0n) { toast.error('Refund buffer is empty'); return }
+
       const secretBytes = new Uint8Array(32)
       crypto.getRandomValues(secretBytes)
       const secretHex = toHex(secretBytes)
 
-      const dest = prompt('Enter customer destination address for claim:')
-      if (!dest || !dest.startsWith('0x')) { toast.error('No valid destination provided'); return }
-
       const claimHashBytes = keccak256(
-        encodeAbiParameters(parseAbiParameters('string, address'), [secretHex, dest as `0x${string}`])
+        encodeAbiParameters(parseAbiParameters('string, address'), [secretHex, dest])
       )
 
+      setClaimRefundingId(inv.invoiceId)
       createClaimTx({
         address: contract.address,
         abi: contract.abi,
         functionName: 'createClaimableRefund',
-        args: [invoice.invoiceId, invoice.amountUnits, claimHashBytes],
+        args: [inv.invoiceId, units, claimHashBytes],
         chainId,
       })
 
       onRefundClaimCreated({
         type: 'refund_claim',
-        invoiceId: invoice.invoiceId,
-        amountUnits: invoice.amountUnits.toString(),
+        invoiceId: inv.invoiceId,
+        amountUnits: units.toString(),
         secret: secretHex,
-        destination: dest as `0x${string}`,
+        destination: dest,
         contractAddress: contract.address,
         chainId,
         claimId: undefined,
       })
     },
-    [contract, chainId, createClaimTx, onRefundClaimCreated]
+    [contract, chainId, bufferBalance, createClaimTx, onRefundClaimCreated]
   )
 
   // ── Manual card helpers ───────────────────────────────────────────────────
@@ -267,14 +289,13 @@ export function CashierPane({
     })
   }, [manualInvoiceId, manualClaimDest, manualAmountUnits, contract, chainId, manualClaimTx, onRefundClaimCreated])
 
-  // Auto-fill manual card from a paid invoice pill
+  // ── Auto-fill manual card from a paid invoice (pill or row click) ─────────
+  // Expands the manual card, locks the payer, caps the amount at the buffer.
   const fillFromInvoice = useCallback((inv: Invoice) => {
     setManualOpen(true)
     setManualInvoiceId(inv.invoiceId)
-    // Cap refund amount at buffer balance or original invoice amount, whichever is smaller
-    const capUnits = bufferBalance < inv.amountUnits ? bufferBalance : inv.amountUnits
-    const capUsd = (Number(capUnits) / 1_000_000).toFixed(2)
-    setManualAmountUsd(capUsd)
+    const safe = safeRefundUnits(inv.amountUnits, bufferBalance)
+    setManualAmountUsd(formatUnitsUsd(safe))
     if (inv.payer) {
       setManualRecipient(inv.payer)
       setManualClaimDest(inv.payer)
@@ -285,9 +306,6 @@ export function CashierPane({
     void navigator.clipboard.writeText(text)
     toast.success('Copied!')
   }
-
-  // Suppress: formatAmount is imported for potential future use
-  void formatAmount
 
   return (
     <div className="flex flex-col h-full gap-4 p-4 overflow-y-auto">
@@ -379,7 +397,7 @@ export function CashierPane({
         </div>
       )}
 
-      {/* Manual Refund & Claim QR */}
+      {/* ── Manual Refund & Claim QR card ──────────────────────────────────── */}
       <div className="glass overflow-hidden">
         <button
           onClick={() => setManualOpen(o => !o)}
@@ -403,7 +421,7 @@ export function CashierPane({
               <span className="tabular-nums font-semibold text-[var(--success)]">${bufferUsd.toFixed(2)} USDC</span>
             </div>
 
-            {/* Recent Paid Invoices pills */}
+            {/* Recent Paid Invoices pills — click to auto-fill entire form */}
             {paidInvoices.length > 0 && (
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-[var(--muted)]">Recent paid invoices — click to auto-fill</span>
@@ -469,10 +487,9 @@ export function CashierPane({
               {/* Direct Refund — locked to original payer */}
               <div className="flex flex-col gap-2">
                 <span className="text-xs font-medium text-[var(--danger)] uppercase tracking-wide">Direct Refund</span>
-                {/* Locked recipient — anti-theft: always routes back to original payer */}
                 <div className="flex flex-col gap-0.5">
                   <label className="text-[10px] text-[var(--subtle)] flex items-center gap-1">
-                    <span>🔒</span> Original Payer Wallet (Locked for Anti-Theft)
+                    <Lock size={9} /> Original Payer Wallet (Locked for Anti-Theft)
                   </label>
                   <div className={`w-full bg-[var(--surface-muted)] border rounded-xl px-3 py-2 text-xs mono truncate ${
                     manualRecipient
@@ -495,12 +512,8 @@ export function CashierPane({
                   {manualDirectPending ? 'Confirm…' : manualDirectConfirming ? 'Sending…' : 'Issue Direct Refund'}
                 </button>
                 {manualDirectSuccess && manualDirectHash && (
-                  <a
-                    href={arcTxUrl(chainId, manualDirectHash)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-[var(--success)] flex items-center gap-1 hover:underline"
-                  >
+                  <a href={arcTxUrl(chainId, manualDirectHash)} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-[var(--success)] flex items-center gap-1 hover:underline">
                     <CheckCircle size={10} /> Sent! View tx
                   </a>
                 )}
@@ -529,12 +542,8 @@ export function CashierPane({
                   {manualClaimTxPending ? 'Confirm…' : manualClaimTxConfirming ? 'Creating…' : 'Create Claimable Refund'}
                 </button>
                 {manualClaimTxSuccess && manualClaimTxHash && (
-                  <a
-                    href={arcTxUrl(chainId, manualClaimTxHash)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-[var(--success)] flex items-center gap-1 hover:underline"
-                  >
+                  <a href={arcTxUrl(chainId, manualClaimTxHash)} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-[var(--success)] flex items-center gap-1 hover:underline">
                     <CheckCircle size={10} /> Created! View tx
                   </a>
                 )}
@@ -568,62 +577,96 @@ export function CashierPane({
         )}
       </div>
 
-      {/* Recent Receipts (from session paidInvoices — also shown in manual card as pills) */}
+      {/* ── Recent Receipts ─────────────────────────────────────────────────── */}
       {paidInvoices.length > 0 && (
         <div className="glass p-4 flex flex-col gap-2">
           <div className="flex items-center gap-2 mb-1">
             <CheckCircle size={13} className="text-[var(--success)]" />
             <span className="text-sm font-semibold text-[var(--ink)]">Recent Receipts</span>
+            <span className="ml-auto text-xs text-[var(--subtle)]">click row to fill refund form</span>
           </div>
-          {paidInvoices.map(inv => (
-            <div key={inv.invoiceId} className="bg-[var(--surface-muted)] rounded-xl p-3 flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span className="mono text-xs text-[var(--subtle)]">{inv.invoiceId.slice(0, 10)}…</span>
-                <span className="tabular-nums text-sm font-semibold text-[var(--success)]">${inv.amountUsd}</span>
-              </div>
-              {inv.note && <p className="text-xs text-[var(--muted)]">{inv.note}</p>}
-              <div className="flex gap-2 flex-wrap">
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    placeholder="Recipient 0x..."
-                    value={refundingId === inv.invoiceId ? refundRecipient : ''}
-                    onChange={e => {
-                      setRefundingId(inv.invoiceId)
-                      setRefundRecipient(e.target.value)
-                    }}
-                    className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-lg px-2 py-1.5 text-xs mono text-[var(--ink)] outline-none focus:border-[var(--border-strong)]"
-                  />
+
+          {paidInvoices.map(inv => {
+            // Compute safe refund amount once per row (buffer-capped)
+            const safeUnits = safeRefundUnits(inv.amountUnits, bufferBalance)
+            const safeUsd   = formatUnitsUsd(safeUnits)
+            const hasPayer  = !!inv.payer
+            const isThisDirectPending  = directRefundingId === inv.invoiceId && (directPending || directConfirming)
+            const isThisDirectDone     = directRefundingId === inv.invoiceId && directSuccess
+            const isThisClaimPending   = claimRefundingId  === inv.invoiceId && (claimPending  || claimConfirming)
+            const isThisClaimDone      = claimRefundingId  === inv.invoiceId && claimSuccess
+
+            return (
+              <div key={inv.invoiceId} className="bg-[var(--surface-muted)] rounded-xl overflow-hidden">
+                {/* Clickable header — auto-fills Manual Refund card */}
+                <button
+                  onClick={() => fillFromInvoice(inv)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-[var(--surface)] transition-colors text-left"
+                >
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="mono text-xs text-[var(--subtle)] truncate">{inv.invoiceId.slice(0, 12)}…</span>
+                    {inv.note && <span className="text-xs text-[var(--muted)] truncate">{inv.note}</span>}
+                    {hasPayer && (
+                      <span className="flex items-center gap-1 text-[10px] text-[var(--subtle)] mono">
+                        <Lock size={8} /> {inv.payer!.slice(0, 8)}…{inv.payer!.slice(-4)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-0.5 shrink-0 ml-2">
+                    <span className="tabular-nums text-sm font-semibold text-[var(--success)]">${inv.amountUsd}</span>
+                    {bufferBalance > 0n && safeUnits < inv.amountUnits && (
+                      <span className="text-[10px] text-[var(--warning)] tabular-nums">cap ${safeUsd}</span>
+                    )}
+                  </div>
+                </button>
+
+                {/* 1-click action row */}
+                <div className="flex gap-1.5 px-3 pb-3">
+                  {/* Direct Refund — locked to original payer */}
+                  <button
+                    onClick={() => { handleDirectRefund(inv) }}
+                    disabled={!hasPayer || isThisDirectPending || isThisClaimPending}
+                    title={hasPayer ? `Refund $${safeUsd} → ${inv.payer!.slice(0, 8)}…` : 'No payer address recorded'}
+                    className="flex-1 py-1.5 rounded-lg border border-[var(--danger)] text-[var(--danger)] text-xs font-medium hover:bg-[var(--danger)] hover:text-white transition-colors disabled:opacity-40 flex items-center justify-center gap-1"
+                  >
+                    {isThisDirectPending
+                      ? <Loader2 size={10} className="animate-spin" />
+                      : <ArrowUpRight size={10} />
+                    }
+                    {isThisDirectPending ? (directPending ? 'Confirm…' : 'Sending…') : `Refund $${safeUsd}`}
+                  </button>
+
+                  {/* CEX-Safe Claim QR — routes to payer by default */}
+                  <button
+                    onClick={() => { handleCreateClaimRefund(inv) }}
+                    disabled={!hasPayer || isThisDirectPending || isThisClaimPending}
+                    title={hasPayer ? `Claim QR $${safeUsd} → ${inv.payer!.slice(0, 8)}…` : 'No payer address recorded'}
+                    className="flex-1 py-1.5 rounded-lg border border-[var(--accent)] text-[var(--accent)] text-xs font-medium hover:bg-[var(--accent)] hover:text-[#0d1b2f] transition-colors disabled:opacity-40 flex items-center justify-center gap-1"
+                  >
+                    {isThisClaimPending
+                      ? <Loader2 size={10} className="animate-spin" />
+                      : <ChevronRight size={10} />
+                    }
+                    {isThisClaimPending ? (claimPending ? 'Confirm…' : 'Creating…') : 'CEX Claim QR'}
+                  </button>
                 </div>
-                <button
-                  onClick={() => { handleDirectRefund(inv) }}
-                  disabled={directPending || directConfirming}
-                  className="px-2.5 py-1.5 rounded-lg border border-[var(--danger)] text-[var(--danger)] text-xs font-medium hover:bg-[var(--danger)] hover:text-white transition-colors disabled:opacity-40 flex items-center gap-1"
-                >
-                  {directPending || directConfirming ? <Loader2 size={10} className="animate-spin" /> : <ArrowUpRight size={10} />}
-                  Direct Refund
-                </button>
-                <button
-                  onClick={() => { handleCreateClaimRefund(inv) }}
-                  disabled={claimPending || claimConfirming}
-                  className="px-2.5 py-1.5 rounded-lg border border-[var(--accent)] text-[var(--accent)] text-xs font-medium hover:bg-[var(--accent)] hover:text-[#0d1b2f] transition-colors disabled:opacity-40 flex items-center gap-1"
-                >
-                  {claimPending || claimConfirming ? <Loader2 size={10} className="animate-spin" /> : <ChevronRight size={10} />}
-                  CEX-Safe Claim QR
-                </button>
+
+                {/* Per-row tx links */}
+                {isThisDirectDone && directHash && (
+                  <a href={arcTxUrl(chainId, directHash)} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-3 pb-2 text-xs text-[var(--success)] hover:underline">
+                    <CheckCircle size={9} /> Refund sent · View tx <ArrowUpRight size={9} />
+                  </a>
+                )}
+                {isThisClaimDone && claimHash && (
+                  <a href={arcTxUrl(chainId, claimHash)} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-3 pb-2 text-xs text-[var(--success)] hover:underline">
+                    <CheckCircle size={9} /> Claim created · View tx <ArrowUpRight size={9} />
+                  </a>
+                )}
               </div>
-              {directSuccess && directHash && (
-                <a
-                  href={arcTxUrl(chainId, directHash)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-[var(--accent)] flex items-center gap-1 hover:underline"
-                >
-                  View refund tx <ArrowUpRight size={10} />
-                </a>
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
