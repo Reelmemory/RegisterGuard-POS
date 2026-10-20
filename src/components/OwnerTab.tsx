@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi'
-import { isAddress, erc20Abi } from 'viem'
+import { isAddress, erc20Abi, parseUnits, formatUnits } from 'viem'
 import { toast } from 'sonner'
 import {
   Settings,
@@ -14,12 +14,16 @@ import {
   Shield,
 } from 'lucide-react'
 import type { RegisterGuardContract } from '../types'
+import type { Invoice } from '../types'
 import { getUsdc, buildTxExplorerUrl } from '@/onchain-facts'
+import { exportSessionCsv } from '../utils/exportCsv'
+import { Download } from 'lucide-react'
 
 interface Props {
   contract: RegisterGuardContract
   chainId: number
   ownerAddress: `0x${string}`
+  paidInvoices?: Invoice[]
 }
 
 function StatCard({
@@ -45,7 +49,7 @@ function StatCard({
   )
 }
 
-export function OwnerTab({ contract, chainId, ownerAddress: _ownerAddress }: Props) {
+export function OwnerTab({ contract, chainId, ownerAddress: _ownerAddress, paidInvoices = [] }: Props) {
   const usdc = getUsdc(chainId)
 
   // Read on-chain state
@@ -88,8 +92,15 @@ export function OwnerTab({ contract, chainId, ownerAddress: _ownerAddress }: Pro
     query: { enabled: !!splitConfigRaw?.[1] },
   }) as { data: bigint | undefined }
 
-  const fmt6 = (v: bigint | undefined) =>
-    v !== undefined ? `$${(Number(v) / 1_000_000).toFixed(2)}` : '—'
+  // Show up to 4 decimal places when sub-cent fractions exist, 2 otherwise.
+  const fmt6 = (v: bigint | undefined) => {
+    if (v === undefined) return '—'
+    // Use formatUnits for exact decimal conversion (no floating-point rounding)
+    const exact = formatUnits(v, 6)          // e.g. "1.250000"
+    const num   = parseFloat(exact)
+    const hasSub = v % 10000n !== 0n         // non-zero below $0.01
+    return `$${num.toFixed(hasSub ? 4 : 2)}`
+  }
   const fmtBps = (v: number | undefined) =>
     v !== undefined ? `${(v / 100).toFixed(0)}%` : '—'
 
@@ -175,16 +186,25 @@ export function OwnerTab({ contract, chainId, ownerAddress: _ownerAddress }: Pro
       toast.error('Invalid supplier address')
       return
     }
-    const amt = Math.round(parseFloat(escrowForm.amount) * 1_000_000)
-    if (isNaN(amt) || amt <= 0) {
+    if (!escrowForm.amount || isNaN(parseFloat(escrowForm.amount)) || parseFloat(escrowForm.amount) <= 0) {
       toast.error('Invalid amount')
       return
     }
+    // parseUnits gives the exact integer — no floating-point Math.round error.
+    let amtBn: bigint
+    try {
+      amtBn = parseUnits(escrowForm.amount, 6)
+    } catch {
+      toast.error('Invalid amount format')
+      return
+    }
+    // Default empty ref to 'INV-2026-001' so contract never reverts on empty string.
+    const invoiceRef = escrowForm.ref.trim() || 'INV-2026-001'
     releaseTx({
       address: contract.address,
       abi: contract.abi,
       functionName: 'releaseSupplierEscrow',
-      args: [escrowForm.supplier, BigInt(amt), escrowForm.ref],
+      args: [escrowForm.supplier, amtBn, invoiceRef],
       chainId,
     })
   }, [escrowForm, contract, chainId, releaseTx])
@@ -193,9 +213,19 @@ export function OwnerTab({ contract, chainId, ownerAddress: _ownerAddress }: Pro
     <div className="flex flex-col gap-6 p-4 max-w-3xl mx-auto">
       {/* Metric Cards */}
       <div>
-        <h2 className="display text-sm font-semibold text-[var(--muted)] uppercase tracking-widest mb-3">
-          Live Treasury Metrics
-        </h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="display text-sm font-semibold text-[var(--muted)] uppercase tracking-widest">
+            Live Treasury Metrics
+          </h2>
+          {paidInvoices.length > 0 && (
+            <button
+              onClick={() => exportSessionCsv(paidInvoices)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[var(--border)] text-xs text-[var(--subtle)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+            >
+              <Download size={11} /> Export Session CSV
+            </button>
+          )}
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <StatCard label="Savings Vault" value={fmt6(savingsBalance)} icon={Wallet} sub="Live USDC balance" />
           <StatCard label="Working Capital" value={fmt6(workingCapBalance)} icon={TrendingUp} sub="Live USDC balance" />
@@ -369,17 +399,40 @@ export function OwnerTab({ contract, chainId, ownerAddress: _ownerAddress }: Pro
         />
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs text-[var(--muted)] mb-1 block">Amount (USD)</label>
-            <input
-              type="number"
-              placeholder="0.00"
-              value={escrowForm.amount}
-              onChange={e => setEscrowForm(f => ({ ...f, amount: e.target.value }))}
-              className="w-full bg-[var(--surface-muted)] border border-[var(--border)] rounded-xl px-3 py-2 text-sm tabular-nums text-[var(--ink)] outline-none focus:border-[var(--border-strong)]"
-            />
+            <label className="text-xs text-[var(--muted)] mb-1 block">Amount (USDC)</label>
+            {/* Wrapper gives us right-padding room for the Max button */}
+            <div className="relative">
+              <input
+                type="number"
+                placeholder="0.000000"
+                value={escrowForm.amount}
+                onChange={e => setEscrowForm(f => ({ ...f, amount: e.target.value }))}
+                className="w-full bg-[var(--surface-muted)] border border-[var(--border)] rounded-xl px-3 pr-14 py-2 text-sm tabular-nums text-[var(--ink)] outline-none focus:border-[var(--border-strong)]"
+              />
+              {/* Max button — fills exact on-chain supplierEscrowBalance via formatUnits
+                  so no rounding-up can cause the tx to revert */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (supplierEscrow !== undefined)
+                    setEscrowForm(f => ({ ...f, amount: formatUnits(supplierEscrow, 6) }))
+                }}
+                disabled={supplierEscrow === undefined || supplierEscrow === 0n}
+                className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded-lg bg-[var(--accent)] text-[#0d1b2f] text-[10px] font-bold hover:opacity-80 disabled:opacity-30 transition-opacity"
+              >
+                Max
+              </button>
+            </div>
+            {supplierEscrow !== undefined && supplierEscrow > 0n && (
+              <p className="text-[10px] text-[var(--subtle)] mt-1 tabular-nums">
+                On-chain balance: {formatUnits(supplierEscrow, 6)} USDC
+              </p>
+            )}
           </div>
           <div>
-            <label className="text-xs text-[var(--muted)] mb-1 block">Invoice Reference</label>
+            <label className="text-xs text-[var(--muted)] mb-1 block">
+              Invoice Reference <span className="text-[var(--subtle)]">(blank → INV-2026-001)</span>
+            </label>
             <input
               type="text"
               placeholder="INV-2026-001"

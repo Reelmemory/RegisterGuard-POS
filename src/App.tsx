@@ -182,6 +182,7 @@ export default function App() {
             contract={contract}
             chainId={setupChainId}
             ownerAddress={address ?? '0x0000000000000000000000000000000000000000'}
+            paidInvoices={paidInvoices}
           />
         </div>
       )}

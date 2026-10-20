@@ -12,11 +12,18 @@ Non-custodial retail POS system on Arc. Accepts USDC payments (direct approve+pa
 
 ## Deployed Contracts
 
-### RegisterGuardPOS (Arc Testnet)
+### RegisterGuardPOS (Arc Testnet — current default fallback)
+- **Address**: `0x24ba037490c956ff4a75d9efd37c5c171cc4d27f`
+- **Explorer**: https://explorer.testnet.arc.io/address/0x24ba037490c956ff4a75d9efd37c5c171cc4d27f
+- **Deploy tx**: `0x0d3034a92e8ce53f6f604dcd623d88fbee5552873231dc63904ea784d8ec884e`
+- **Constructor**: USDC=0x3600…0000, initialOwner/savings/workingCap=deployer wallet, BPS=2500/6000/1000/500, maxBuffer=50000000 (50 USDC)
+
+### RegisterGuardPOS (Arc Testnet — previous deploy)
 - **Address**: `0x66bdda835c3f71b6dbf15e49fc67d7b3eccedded`
 - **Explorer**: https://explorer.testnet.arc.io/address/0x66bdda835c3f71b6dbf15e49fc67d7b3eccedded
-- **Deploy tx**: `0x4e12bfb7f4809a0c2792d9cd248dbd92b98ea1dd303ddf51dad8c0a73505a6f6`
-- **Constructor**: USDC=0x3600…0000, initialOwner/savings/workingCap=deployer wallet, BPS=2500/6000/1000/500, maxBuffer=50000000 (50 USDC)
+
+### RegisterGuardPOS (Arc Mainnet)
+- **Address**: Not yet deployed — deploy from your own wallet on Chain ID 5042 then uncomment the fallback in `src/utils/contractStorage.ts`
 
 ## Tech Stack
 

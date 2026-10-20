@@ -1,13 +1,20 @@
 {
-  "contractAddress": "0x66bdda835c3f71b6dbf15e49fc67d7b3eccedded",
+  "contractAddress": "0x24ba037490c956ff4a75d9efd37c5c171cc4d27f",
   "network": "ARC-TESTNET",
   "deployerWalletId": "3c2464b2-8369-52e2-a782-800bbeca5396",
   "contract_code_path": "/home/user/app/contracts/RegisterGuardPOS.sol",
   "contract_compiled_code_path": "/home/user/app/contracts/out/RegisterGuardPOS.sol/RegisterGuardPOS.json",
   "contract_network_and_links": {
-    "Arc Testnet": "https://explorer.testnet.arc.io/address/0x66bdda835c3f71b6dbf15e49fc67d7b3eccedded"
+    "Arc Testnet": "https://explorer.testnet.arc.io/address/0x24ba037490c956ff4a75d9efd37c5c171cc4d27f"
   },
   "contract_deployments": [
+    {
+      "chain": "Arc Testnet",
+      "address": "0x24ba037490c956ff4a75d9efd37c5c171cc4d27f",
+      "explorerUrl": "https://explorer.testnet.arc.io/address/0x24ba037490c956ff4a75d9efd37c5c171cc4d27f",
+      "txHash": "0x0d3034a92e8ce53f6f604dcd623d88fbee5552873231dc63904ea784d8ec884e",
+      "deployedAt": "2026-10-20T21:28:01.283Z"
+    },
     {
       "chain": "Arc Testnet",
       "address": "0x66bdda835c3f71b6dbf15e49fc67d7b3eccedded",

@@ -248,7 +248,12 @@ export function CustomerPane({
   }, [activeInvoice, address, usdc, contract, chainId, signTypedDataAsync, onSignedQR])
 
   const handleClaimRefund = useCallback(() => {
-    if (!activeRefundClaim || !claimDestination.startsWith('0x')) {
+    if (!activeRefundClaim) return
+    // Use typed destination, or fall back to the payload's default destination
+    const dest = claimDestination.startsWith('0x')
+      ? claimDestination
+      : activeRefundClaim.destination ?? ''
+    if (!dest.startsWith('0x')) {
       toast.error('Enter a valid destination address'); return
     }
     const claimId = activeRefundClaim.claimId
@@ -257,7 +262,7 @@ export function CustomerPane({
       address: contract.address,
       abi: contract.abi,
       functionName: 'claimRefund',
-      args: [claimId, activeRefundClaim.secret, claimDestination as `0x${string}`],
+      args: [claimId, activeRefundClaim.secret, dest as `0x${string}`],
       chainId,
     })
   }, [activeRefundClaim, claimDestination, contract, chainId, claimTx])
@@ -458,38 +463,80 @@ export function CustomerPane({
         </div>
       )}
 
-      {/* Refund Claim Scanner */}
+      {/* ── Claim Refund Escrow Drawer ─────────────────────────────────────── */}
       {activeRefundClaim && (
-        <div className="glass p-4 flex flex-col gap-3">
+        <div className="glass border border-[var(--accent)] p-4 flex flex-col gap-3">
+          {/* Header */}
           <div className="flex items-center gap-2">
-            <ShieldCheck size={13} className="text-[var(--accent)]" />
-            <span className="text-sm font-semibold text-[var(--ink)]">Refund Claim</span>
+            <div className="w-7 h-7 rounded-full bg-[rgba(99,190,255,0.12)] flex items-center justify-center">
+              <ShieldCheck size={14} className="text-[var(--accent)]" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[var(--ink)]">Claim Refund Escrow</p>
+              <p className="text-xs text-[var(--subtle)]">CEX-safe · route to any wallet</p>
+            </div>
           </div>
-          <div className="bg-[var(--surface-muted)] rounded-xl p-3 text-xs">
+
+          {/* Refund summary */}
+          <div className="bg-[var(--surface-muted)] rounded-xl p-3 flex flex-col gap-2 text-xs">
             <div className="flex justify-between">
-              <span className="text-[var(--subtle)]">Amount</span>
-              <span className="tabular-nums text-[var(--success)] font-semibold">
+              <span className="text-[var(--subtle)]">Refund Amount</span>
+              <span className="tabular-nums text-[var(--success)] font-bold text-sm">
                 {formatUsd(activeRefundClaim.amountUnits)}
               </span>
             </div>
+            <div className="flex justify-between">
+              <span className="text-[var(--subtle)]">Invoice</span>
+              <span className="mono text-[var(--ink-2)]">
+                {activeRefundClaim.invoiceId.slice(0, 12)}…
+              </span>
+            </div>
+            {activeRefundClaim.destination && (
+              <div className="flex justify-between">
+                <span className="text-[var(--subtle)]">Default destination</span>
+                <span className="mono text-[var(--ink-2)]">
+                  {activeRefundClaim.destination.slice(0, 10)}…
+                </span>
+              </div>
+            )}
           </div>
-          <input
-            type="text"
-            placeholder="Your destination address 0x..."
-            value={claimDestination}
-            onChange={e => setClaimDestination(e.target.value)}
-            className="w-full bg-[var(--surface-muted)] border border-[var(--border)] rounded-xl px-3 py-2.5 text-xs mono text-[var(--ink)] outline-none focus:border-[var(--border-strong)]"
-          />
+
+          {/* Destination address — pre-filled from claim payload, editable */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-[var(--subtle)]">
+              Receive-to Address
+              <span className="ml-1 text-[var(--muted)]">(override to send to a different wallet)</span>
+            </label>
+            <input
+              type="text"
+              placeholder={activeRefundClaim.destination ?? '0x…'}
+              value={claimDestination}
+              onChange={e => setClaimDestination(e.target.value)}
+              className="w-full bg-[var(--surface-muted)] border border-[var(--border)] rounded-xl px-3 py-2.5 text-xs mono text-[var(--ink)] outline-none focus:border-[var(--accent)] transition-colors"
+            />
+            {/* Quick-fill from payload destination */}
+            {activeRefundClaim.destination && !claimDestination && (
+              <button
+                onClick={() => setClaimDestination(activeRefundClaim.destination)}
+                className="self-start text-[10px] text-[var(--accent)] hover:underline"
+              >
+                Use default: {activeRefundClaim.destination.slice(0, 12)}…
+              </button>
+            )}
+          </div>
+
           <button
             onClick={handleClaimRefund}
-            disabled={claimPending || claimConfirming}
-            className="w-full py-2.5 rounded-xl bg-[var(--accent)] text-[#0d1b2f] font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-40 transition-opacity"
+            disabled={claimPending || claimConfirming || (!claimDestination && !activeRefundClaim.destination)}
+            className="w-full py-3 rounded-xl bg-[var(--accent)] text-[#0d1b2f] font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-40 transition-opacity"
           >
             {claimPending || claimConfirming ? (
               <><Loader2 size={13} className="animate-spin" />
-                {claimPending ? 'Confirm…' : 'Sweeping…'}
+                {claimPending ? 'Confirm in wallet…' : 'Sweeping…'}
               </>
-            ) : 'Sweep Refund with QR Secret'}
+            ) : (
+              <><ShieldCheck size={14} /> Sweep Claimable Refund</>
+            )}
           </button>
           {claimSuccess && claimTxHash && (
             <a
@@ -498,7 +545,7 @@ export function CustomerPane({
               rel="noopener noreferrer"
               className="text-xs text-[var(--success)] flex items-center gap-1 justify-center hover:underline"
             >
-              <CheckCircle size={11} /> Refund swept! View tx <ArrowUpRight size={10} />
+              <CheckCircle size={11} /> Refund swept successfully! View tx <ArrowUpRight size={10} />
             </a>
           )}
         </div>
