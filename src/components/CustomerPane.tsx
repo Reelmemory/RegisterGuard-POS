@@ -54,19 +54,32 @@ export function CustomerPane({
 
   const usdc = getUsdc(chainId)
 
-  // Read the USDC token's EIP-712 domain version string at runtime.
-  // Hardcoding '2' is wrong if the deployed token initialised with '1'.
+  // Read name() and version() from the live USDC contract for the EIP-712 domain.
+  // On Arc Mainnet the token's name() returns "USDC", NOT "USD Coin".
+  // Hardcoding either string breaks the domain separator and causes invalid-sig reverts.
+  const USDC_META_ABI = [
+    { name: 'name',    type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'string' }] },
+    { name: 'version', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'string' }] },
+  ] as const
+  const usdcAddr = usdc?.address as `0x${string}` | undefined
+  const { data: usdcDomainName } = useReadContract({
+    address: usdcAddr,
+    abi: USDC_META_ABI,
+    functionName: 'name',
+    chainId,
+    query: { enabled: !!usdcAddr, staleTime: Infinity },
+  })
   const { data: usdcDomainVersion } = useReadContract({
-    address: usdc?.address as `0x${string}` | undefined,
-    abi: [{ name: 'version', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'string' }] }] as const,
+    address: usdcAddr,
+    abi: USDC_META_ABI,
     functionName: 'version',
     chainId,
-    query: { enabled: !!usdc?.address, staleTime: Infinity },
+    query: { enabled: !!usdcAddr, staleTime: Infinity },
   })
-  // Fall back to '2' (FiatTokenV2.x standard) if the call hasn't returned yet
-  const usdcVersion: string = (typeof usdcDomainVersion === 'string' && usdcDomainVersion.length > 0)
-    ? usdcDomainVersion
-    : '2'
+  // Fall back only if the RPC call has not returned yet (staleTime: Infinity
+  // means these are cached after the first successful read).
+  const usdcName:    string = (typeof usdcDomainName    === 'string' && usdcDomainName.length    > 0) ? usdcDomainName    : 'USDC'
+  const usdcVersion: string = (typeof usdcDomainVersion === 'string' && usdcDomainVersion.length > 0) ? usdcDomainVersion : '2'
 
   // ── wagmi hooks ───────────────────────────────────────────────────────────
   const {
@@ -206,8 +219,8 @@ export function CustomerPane({
 
       const sig = await signTypedDataAsync({
         domain: {
-          name: 'USD Coin',
-          version: usdcVersion, // read from contract, not hardcoded
+          name: usdcName,    // read from USDC.name() — "USDC" on Arc, not "USD Coin"
+          version: usdcVersion, // read from USDC.version() — "2"
           chainId,
           verifyingContract: usdc.address as `0x${string}`,
         },
@@ -228,7 +241,11 @@ export function CustomerPane({
       const sigBytes = sig.slice(2)
       const r = `0x${sigBytes.slice(0, 64)}`
       const s = `0x${sigBytes.slice(64, 128)}`
-      const v = parseInt(sigBytes.slice(128, 130), 16)
+      // FiatTokenV2 requires v to be strictly 27 or 28.
+      // Modern wallets (MetaMask, Rabby) return v as 0 or 1 (EIP-2098 form).
+      // If v < 27, add 27 to bring it into the legacy range the contract expects.
+      const rawV = parseInt(sigBytes.slice(128, 130), 16)
+      const v = rawV < 27 ? rawV + 27 : rawV
 
       const payload: EIP3009SignedPayload = {
         type: 'eip3009_signed',
@@ -238,7 +255,7 @@ export function CustomerPane({
         validAfter: validAfter.toString(),
         validBefore: validBefore.toString(),
         nonce,
-        v,
+        v,   // already normalized to 27 or 28
         r: r as `0x${string}`,
         s: s as `0x${string}`,
         cashier: activeInvoice.cashier,
@@ -261,7 +278,7 @@ export function CustomerPane({
     } finally {
       setIsSigning(false)
     }
-  }, [activeInvoice, address, usdc, usdcVersion, contract, chainId, signTypedDataAsync, onSignedQR])
+  }, [activeInvoice, address, usdc, usdcName, usdcVersion, contract, chainId, signTypedDataAsync, onSignedQR])
 
   const handleClaimRefund = useCallback(() => {
     if (!activeRefundClaim) return
