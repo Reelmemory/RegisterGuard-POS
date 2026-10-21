@@ -6,21 +6,25 @@
 :root {
   --bg: #0d1b2f;
   --bg-gradient: linear-gradient(180deg, #0d1b2f 0%, #0d1b2f 58%, #122d45 100%);
-  --surface: rgba(255, 255, 255, 0.07);
-  --surface-strong: rgba(255, 255, 255, 0.11);
-  --surface-muted: #1f2f44;
-  --ink: #f9faf3;
-  --ink-2: #e3ecf9;
-  --muted: #cbd5e1;
-  --subtle: #94a3b8;
-  --border: rgba(255, 255, 255, 0.12);
-  --border-strong: rgba(203, 219, 242, 0.55);
-  --accent: #acc6e9;
-  --accent-hover: #cbdbf2;
-  --success: #8dd89f;
-  --danger: #e86d7a;
-  --cashier-accent: #60c2a0;
-  --customer-accent: #acc6e9;
+  --surface: rgba(255, 255, 255, 0.08);
+  --surface-strong: rgba(255, 255, 255, 0.13);
+  /* Slightly lighter so inputs/cards sit above --bg cleanly */
+  --surface-muted: #243347;
+  /* Input fields need to stand out from card backgrounds */
+  --input-bg: #1a2a3d;
+  --ink: #f4f7fb;           /* softer pure-white → less glare */
+  --ink-2: #dce8f7;
+  --muted: #d4deed;         /* label/hint text — was #cbd5e1, now a touch brighter */
+  --subtle: #a8bbd4;        /* secondary text — bumped from #94a3b8 for WCAG AA on dark bg */
+  --border: rgba(255, 255, 255, 0.18);       /* was 0.12 — much more visible */
+  --border-strong: rgba(203, 219, 242, 0.65);
+  --accent: #7db8f0;        /* brighter blue — more vibrant on dark bg */
+  --accent-hover: #a8d0f8;
+  --success: #6ed98a;       /* slightly more saturated green */
+  --danger: #f07080;        /* slightly brighter red */
+  --warning: #f0c060;       /* amber — was missing, used in receipt rows */
+  --cashier-accent: #4ecba8; /* more vivid teal */
+  --customer-accent: #7db8f0;
 }
 
 /* Typography */
@@ -60,6 +64,29 @@ body {
   border-radius: 16px;
 }
 
-/* Toaster override for dark mode */
-[data-sonner-toaster] [data-type="success"] { background: #1a3a2a !important; border-color: var(--success) !important; }
-[data-sonner-toaster] [data-type="error"] { background: #3a1a1f !important; border-color: var(--danger) !important; }
+/* Toaster override for dark mode — higher-contrast banners */
+[data-sonner-toaster] [data-type="success"] {
+  background: #1c3d28 !important;
+  border-color: var(--success) !important;
+  color: var(--ink) !important;
+}
+[data-sonner-toaster] [data-type="error"] {
+  background: #3d1b22 !important;
+  border-color: var(--danger) !important;
+  color: var(--ink) !important;
+}
+[data-sonner-toaster] [data-type="info"] {
+  background: #1a2e48 !important;
+  border-color: var(--accent) !important;
+  color: var(--ink) !important;
+}
+
+/* Input fields — use dedicated input background for clear hierarchy */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"] {
+  background-color: var(--input-bg) !important;
+  color: var(--ink) !important;
+}
+input::placeholder { color: var(--subtle) !important; opacity: 1; }

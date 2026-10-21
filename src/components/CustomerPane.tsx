@@ -4,8 +4,9 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
   useSignTypedData,
+  useReadContract,
 } from 'wagmi'
-import { erc20Abi, keccak256, encodeAbiParameters } from 'viem'
+import { erc20Abi, toHex } from 'viem'
 import { toast } from 'sonner'
 import QRCode from 'qrcode'
 import { Wifi, WifiOff, ShieldCheck, ShoppingCart, Loader2, ArrowUpRight, CheckCircle, Receipt, Store } from 'lucide-react'
@@ -52,6 +53,20 @@ export function CustomerPane({
   const [receiptOpen, setReceiptOpen] = useState(false)
 
   const usdc = getUsdc(chainId)
+
+  // Read the USDC token's EIP-712 domain version string at runtime.
+  // Hardcoding '2' is wrong if the deployed token initialised with '1'.
+  const { data: usdcDomainVersion } = useReadContract({
+    address: usdc?.address as `0x${string}` | undefined,
+    abi: [{ name: 'version', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'string' }] }] as const,
+    functionName: 'version',
+    chainId,
+    query: { enabled: !!usdc?.address, staleTime: Infinity },
+  })
+  // Fall back to '2' (FiatTokenV2.x standard) if the call hasn't returned yet
+  const usdcVersion: string = (typeof usdcDomainVersion === 'string' && usdcDomainVersion.length > 0)
+    ? usdcDomainVersion
+    : '2'
 
   // ── wagmi hooks ───────────────────────────────────────────────────────────
   const {
@@ -180,18 +195,19 @@ export function CustomerPane({
     try {
       const amount = BigInt(activeInvoice.amountUnits)
       const validAfter = 0n
+      // Give 1 hour of validity; short enough to be safe, long enough for relay lag
       const validBefore = BigInt(Math.floor(Date.now() / 1000) + 3600)
+      // Nonce must be a flat 32-byte value — NOT a hash of encoded bytes.
+      // keccak256(encodeAbiParameters(...)) would produce a different bytes32
+      // than what the signer and the USDC contract both see as the nonce field.
       const nonceBytes = new Uint8Array(32)
       crypto.getRandomValues(nonceBytes)
-      const nonce = keccak256(encodeAbiParameters(
-        [{ type: 'bytes' }],
-        [`0x${Buffer.from(nonceBytes).toString('hex')}`]
-      ))
+      const nonce = toHex(nonceBytes)
 
       const sig = await signTypedDataAsync({
         domain: {
           name: 'USD Coin',
-          version: '2',
+          version: usdcVersion, // read from contract, not hardcoded
           chainId,
           verifyingContract: usdc.address as `0x${string}`,
         },
@@ -245,7 +261,7 @@ export function CustomerPane({
     } finally {
       setIsSigning(false)
     }
-  }, [activeInvoice, address, usdc, contract, chainId, signTypedDataAsync, onSignedQR])
+  }, [activeInvoice, address, usdc, usdcVersion, contract, chainId, signTypedDataAsync, onSignedQR])
 
   const handleClaimRefund = useCallback(() => {
     if (!activeRefundClaim) return

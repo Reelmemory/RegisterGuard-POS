@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import {
   useWriteContract,
   useWaitForTransactionReceipt,
@@ -134,13 +134,54 @@ export function CashierPane({
   const { isLoading: directConfirming, isSuccess: directSuccess } = useWaitForTransactionReceipt({ hash: directHash })
 
   const { writeContract: createClaimTx, data: claimHash, isPending: claimPending } = useWriteContract()
-  const { isLoading: claimConfirming, isSuccess: claimSuccess } = useWaitForTransactionReceipt({ hash: claimHash })
+  const { isLoading: claimConfirming, isSuccess: claimSuccess, data: claimReceipt } = useWaitForTransactionReceipt({ hash: claimHash })
 
   const { writeContract: manualDirectTx, data: manualDirectHash, isPending: manualDirectPending } = useWriteContract()
   const { isLoading: manualDirectConfirming, isSuccess: manualDirectSuccess } = useWaitForTransactionReceipt({ hash: manualDirectHash })
 
   const { writeContract: manualClaimTx, data: manualClaimTxHash, isPending: manualClaimTxPending } = useWriteContract()
-  const { isLoading: manualClaimTxConfirming, isSuccess: manualClaimTxSuccess } = useWaitForTransactionReceipt({ hash: manualClaimTxHash })
+  const { isLoading: manualClaimTxConfirming, isSuccess: manualClaimTxSuccess, data: manualClaimReceipt } = useWaitForTransactionReceipt({ hash: manualClaimTxHash })
+
+  // Holds the pending RefundClaimPayload (without claimId) until the receipt arrives
+  const pendingClaimPayloadRef    = useRef<Omit<RefundClaimPayload, 'claimId'> | null>(null)
+  const pendingManualClaimPayloadRef = useRef<Omit<RefundClaimPayload, 'claimId'> | null>(null)
+  // Track which receipts we already processed (prevent double-fire)
+  const processedClaimTxRef       = useRef<string | undefined>(undefined)
+  const processedManualClaimTxRef = useRef<string | undefined>(undefined)
+
+  // Parse RefundClaimCreated log from receipt → extract real claimId (topic[1])
+  // Event: RefundClaimCreated(bytes32 indexed claimId, bytes32 indexed invoiceId, …)
+  const REFUND_CLAIM_CREATED_TOPIC =
+    '0x' + keccak256(toHex('RefundClaimCreated(bytes32,bytes32,uint256,uint256,address)')).slice(2)
+
+  // Row-level claim: fire onRefundClaimCreated with real claimId once receipt lands
+  useEffect(() => {
+    if (!claimReceipt || claimReceipt.transactionHash === processedClaimTxRef.current) return
+    if (!pendingClaimPayloadRef.current) return
+    processedClaimTxRef.current = claimReceipt.transactionHash
+    const log = claimReceipt.logs.find(l =>
+      l.topics[0]?.toLowerCase() === REFUND_CLAIM_CREATED_TOPIC.toLowerCase()
+    )
+    const claimId = log?.topics[1]
+    onRefundClaimCreated({ ...pendingClaimPayloadRef.current, claimId })
+    pendingClaimPayloadRef.current = null
+  // REFUND_CLAIM_CREATED_TOPIC is derived from a constant — safe to omit
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [claimReceipt, onRefundClaimCreated])
+
+  // Manual card: same pattern
+  useEffect(() => {
+    if (!manualClaimReceipt || manualClaimReceipt.transactionHash === processedManualClaimTxRef.current) return
+    if (!pendingManualClaimPayloadRef.current) return
+    processedManualClaimTxRef.current = manualClaimReceipt.transactionHash
+    const log = manualClaimReceipt.logs.find(l =>
+      l.topics[0]?.toLowerCase() === REFUND_CLAIM_CREATED_TOPIC.toLowerCase()
+    )
+    const claimId = log?.topics[1]
+    onRefundClaimCreated({ ...pendingManualClaimPayloadRef.current, claimId })
+    pendingManualClaimPayloadRef.current = null
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manualClaimReceipt, onRefundClaimCreated])
 
   // ── Cart operations ───────────────────────────────────────────────────────
   const addPreset = useCallback((label: string, amount: string) => {
@@ -237,14 +278,8 @@ export function CashierPane({
       encodeAbiParameters(parseAbiParameters('string, address'), [secretHex, dest])
     )
     setClaimRefundingId(inv.invoiceId)
-    createClaimTx({
-      address: contract.address,
-      abi: contract.abi,
-      functionName: 'createClaimableRefund',
-      args: [inv.invoiceId, units, claimHashBytes],
-      chainId,
-    })
-    onRefundClaimCreated({
+    // Store pending payload — effect fires onRefundClaimCreated with real claimId from receipt
+    pendingClaimPayloadRef.current = {
       type: 'refund_claim',
       invoiceId: inv.invoiceId,
       amountUnits: units.toString(),
@@ -252,9 +287,16 @@ export function CashierPane({
       destination: dest,
       contractAddress: contract.address,
       chainId,
-      claimId: undefined,
+    }
+    processedClaimTxRef.current = undefined // reset so effect fires for this new tx
+    createClaimTx({
+      address: contract.address,
+      abi: contract.abi,
+      functionName: 'createClaimableRefund',
+      args: [inv.invoiceId, units, claimHashBytes],
+      chainId,
     })
-  }, [contract, chainId, bufferBalance, createClaimTx, onRefundClaimCreated])
+  }, [contract, chainId, bufferBalance, createClaimTx])
 
   // ── Manual card helpers ───────────────────────────────────────────────────
   const manualAmountUnits = useCallback((): bigint | null => {
@@ -289,6 +331,17 @@ export function CashierPane({
     const claimHashBytes = keccak256(
       encodeAbiParameters(parseAbiParameters('string, address'), [secretHex, manualClaimDest as `0x${string}`])
     )
+    // Store pending payload — effect fires onRefundClaimCreated with real claimId from receipt
+    pendingManualClaimPayloadRef.current = {
+      type: 'refund_claim',
+      invoiceId: manualInvoiceId,
+      amountUnits: units.toString(),
+      secret: secretHex,
+      destination: manualClaimDest as `0x${string}`,
+      contractAddress: contract.address,
+      chainId,
+    }
+    processedManualClaimTxRef.current = undefined
     manualClaimTx({
       address: contract.address,
       abi: contract.abi,
@@ -296,12 +349,13 @@ export function CashierPane({
       args: [manualInvoiceId as `0x${string}`, units, claimHashBytes],
       chainId,
     })
-    const payload = {
+    // Generate QR preview immediately (claimId not needed for the QR payload)
+    const qrPayload = {
       type: 'refund_claim', invoiceId: manualInvoiceId, amountUnits: units.toString(),
       secret: secretHex, destination: manualClaimDest, contractAddress: contract.address, chainId,
     }
     try {
-      const qr = await QRCode.toDataURL(JSON.stringify(payload), {
+      const qr = await QRCode.toDataURL(JSON.stringify(qrPayload), {
         errorCorrectionLevel: 'M', width: 200, margin: 2,
         color: { dark: '#f9faf3', light: '#1f2f44' },
       })
@@ -309,12 +363,7 @@ export function CashierPane({
     } catch { /* best-effort */ }
     setManualClaimSecret(secretHex)
     setManualClaimHashHex(claimHashBytes)
-    onRefundClaimCreated({
-      type: 'refund_claim', invoiceId: manualInvoiceId, amountUnits: units.toString(),
-      secret: secretHex, destination: manualClaimDest as `0x${string}`,
-      contractAddress: contract.address, chainId, claimId: undefined,
-    })
-  }, [manualInvoiceId, manualClaimDest, manualAmountUnits, contract, chainId, manualClaimTx, onRefundClaimCreated])
+  }, [manualInvoiceId, manualClaimDest, manualAmountUnits, contract, chainId, manualClaimTx])
 
   const fillFromInvoice = useCallback((inv: Invoice) => {
     setManualOpen(true)
