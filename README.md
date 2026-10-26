@@ -12,10 +12,10 @@ RegisterGuard POS is a commercial-grade, smart-contract-powered Point-of-Sale te
 
 ## 🔗 Live Deployments & Verified Contracts
 
-* **Live Web App:** [ard-pos-arc.vercel.app](https://ard-pos-arc.vercel.app)
+* **Live Web App:** [ard-pos-arc.vercel.app](https://register-guard-pos-arc.vercel.app/)
 * **RegisterGuard POS Contract (Arc Mainnet):** [`0xc385c48906A0f5CC3dD3C4D02378c145FC8764Be`](https://explorer.arc.io/address/0xc385c48906A0f5CC3dD3C4D02378c145FC8764Be)
 * **Native USDC Token Address:** [`0x3600000000000000000000000000000000000000`](https://explorer.arc.io/token/0x3600000000000000000000000000000000000000)
-* **Demo Video:** [Watch on YouTube](YOUR_YOUTUBE_LINK_HERE)
+* **Demo Video:** [Watch on YouTube](https://youtu.be/xUEu0Dceco8)
 
 ---
 
