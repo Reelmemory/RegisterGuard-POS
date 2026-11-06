@@ -8,18 +8,11 @@ Accept USDC payments in-store or online, automatically split revenue on-chain, a
 
 ## Live Demo
 
-<<<<<<< HEAD
-* **Live Web App:** [ard-pos-arc.vercel.app](https://register-guard-pos-arc.vercel.app/)
-* **RegisterGuard POS Contract (Arc Mainnet):** [`0xc385c48906A0f5CC3dD3C4D02378c145FC8764Be`](https://explorer.arc.io/address/0xc385c48906A0f5CC3dD3C4D02378c145FC8764Be)
-* **Native USDC Token Address:** [`0x3600000000000000000000000000000000000000`](https://explorer.arc.io/token/0x3600000000000000000000000000000000000000)
-* **Demo Video:** [Watch on YouTube](https://youtu.be/xUEu0Dceco8)
-=======
 | Link | Description |
 |------|-------------|
 | **Live App** | [register-guard-pos-arc.vercel.app](https://register-guard-pos-arc.vercel.app/) |
 | **Demo Video** | [Watch on YouTube](https://youtu.be/xUEu0Dceco8) |
 | **Contract (Arc Mainnet)** | [`0xc385c48906A0f5CC3dD3C4D02378c145FC8764Be`](https://explorer.arc.io/address/0xc385c48906A0f5CC3dD3C4D02378c145FC8764Be) |
->>>>>>> 054e145 (Improve README for clarity and judge experience)
 
 ---
 
@@ -85,7 +78,7 @@ Refunds are constrained by policy so a cashier cannot empty the store’s revenu
 
 ---
 
-## Architecture (High Level)
+## Architecture
 Customer Wallet ──► Invoice (USDC) ──► RegisterGuard Contract
 │
 ┌───────────────┼───────────────┐
@@ -93,9 +86,7 @@ Customer Wallet ──► Invoice (USDC) ──► RegisterGuard Contract
 Operating         Tax/Savings     Restocking
 │
 └───────────────► Owner Profit
-
-
-- Cashier UI and Customer UI are split separated
+- Cashier UI and Customer UI are separated
 - All critical rules live in the smart contract
 - Offline signing uses EIP-3009 (`ReceiveWithAuthorization`)
 
@@ -108,19 +99,28 @@ git clone https://github.com/Reelmemory/RegisterGuard-POS.git
 cd RegisterGuard-POS
 npm install --legacy-peer-deps
 npm run dev
-
-=======
 Make sure your wallet (Rabby or MetaMask) is set to Arc Mainnet (Chain ID 5042).
-
-Limitations (Honest)
-Currently optimized for Arc Mainnet USDC only
-Offline (EIP-3009) flow requires the customer wallet to support the necessary signing
+Limitations
+Optimized for Arc Mainnet USDC only
+Offline (EIP-3009) flow requires compatible customer wallets
 Thermal receipt printing is simulated in the browser demo
 Multi-store / multi-cashier enterprise features are still early
-
 Built With
 Arc Mainnet + native USDC
 Solidity smart contracts
-React + Vite frontend
-EIP-3009 for offline authorizations
-Vercel deployment
+React + Vite
+EIP-3009 (offline authorizations)
+Vercel
+License
+MIT
+---
+
+### After pasting
+
+1. Save the file in VS Code.
+2. In the terminal, run:
+
+```bash
+git add README.md
+git rebase --continue
+git push
