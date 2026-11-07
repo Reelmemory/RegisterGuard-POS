@@ -6,7 +6,7 @@ Accept USDC payments in-store or online, automatically distribute revenue on-cha
 
 ---
 
-## 🚀 Live Demo
+## Live Demo
 
 | Resource | Link |
 |---|---|
@@ -16,7 +16,7 @@ Accept USDC payments in-store or online, automatically distribute revenue on-cha
 
 ---
 
-## ⚡ Judge's 60-Second Path
+## Judge's 60-Second Path
 
 1. Open the [live app](https://register-guard-pos-arc.vercel.app/) and connect a wallet configured for **Arc Mainnet (Chain ID 5042)**.
 2. Switch to **Cashier Terminal** view.
@@ -28,7 +28,7 @@ Accept USDC payments in-store or online, automatically distribute revenue on-cha
 
 ---
 
-## 🎯 The Problem
+## The Problem
 
 Retail payment systems need to do more than accept money. Merchants also need control over how revenue is allocated, who can issue refunds, and how payments behave when connectivity is unreliable.
 
@@ -42,7 +42,7 @@ RegisterGuard addresses these challenges with programmable smart-contract rules 
 
 ---
 
-## ⚙️ How It Works
+##  How It Works
 
 ### 1. Automatic 4-Way Treasury Split
 
@@ -70,7 +70,7 @@ Refunds are subject to contract-level restrictions so a cashier cannot independe
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```text
                  Customer Wallet
@@ -101,7 +101,7 @@ Refunds are subject to contract-level restrictions so a cashier cannot independe
 
 ---
 
-## 🌐 Network Details
+##  Network Details
 
 | Parameter | Value |
 |---|---|
@@ -148,7 +148,7 @@ Vite will print the local development URL in your terminal. To interact with the
 
 ---
 
-## ⚠️ Limitations
+##  Limitations
 
 - The current deployment is optimized for **Arc Mainnet and USDC**.
 - The EIP-3009 authorization flow requires a compatible customer wallet.
@@ -157,7 +157,7 @@ Vite will print the local development URL in your terminal. To interact with the
 
 ---
 
-## 🧰 Built With
+## Built With
 
 - **Network:** Arc Mainnet
 - **Settlement asset:** USDC
@@ -170,7 +170,7 @@ Vite will print the local development URL in your terminal. To interact with the
 
 ---
 
-## 🔐 Security
+##  Security
 
 RegisterGuard is designed around least-privilege access. Cashiers receive permissions for point-of-sale operations, while owner-level treasury controls remain separate. Payment distribution and refund restrictions are enforced by smart-contract logic rather than relying solely on frontend checks.
 
@@ -178,6 +178,6 @@ Smart-contract systems can still contain vulnerabilities. This README is not a s
 
 ---
 
-## 📄 License
+##  License
 
 This project is licensed under the [MIT License](LICENSE).
